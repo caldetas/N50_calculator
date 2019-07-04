@@ -3,7 +3,10 @@ simple script to analyse your assembly
 
 ## MANUAL  
   
-    N50.py <flat>  
+    N50.py
+	--minc *minimum contig length, opt*
+	 <flat>
+
 
 ### OUTPUT
   
