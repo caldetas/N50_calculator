@@ -149,6 +149,13 @@ def main(argv):
 #                print('exeption3')
                 N50 = df.iloc[mem_pos[-1]+3,1]
                 break
+            elif df.iloc[:mem_pos[-1]+4,:].length.sum() >= total*0.5:
+#                print('exeption4')
+                N50 = df.iloc[mem_pos[-1]+4,1]
+                break
+            else:
+                print('ERROR: no exception-handling for this type of data!!')
+                break
 
         #exception: exact N50 nr gets hit from a not neighbouring position
         elif df.iloc[:mem_pos[-1]+1,:].length.sum() == total*0.5 and df.iloc[:mem_pos[-1],:].length.sum() < total*0.5:
