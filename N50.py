@@ -83,87 +83,63 @@ def main(argv):
     print()
 
     df = pd.DataFrame(l1)
-
     df = df.iloc[:,:2]
     df = df.sort_values(by=[1])
     df = df.reset_index(drop=True)
-    
     df = df.loc[df[1] >= minc]
-    
-
     df = df.rename(columns={0 : 'contig', 1 : 'length'})#, 2 : 'subtotal'})
     total = df.length.sum()
 
     
     #memorizing contig positions, jump always in middle of ordered df
-    #start at 0
+    #start at 0 for single fasta
     mem_pos = [0, (len(df)-1)//2+1]
+    #memorizing hits that wer too high
+    too_high = [len(df)-1]
+    too_low = [0]
 
 # =============================================================================
-#     analyze last two positions, are they in N50 region?
-#     approach: jump to middle value
-#     if not at N50: add half of position-difference
-#     if over N50: subtract half of position-difference
-#     check if reached: is lower neighbour already in list?    
+#     analyze the position and the lower position, are we at the N50?
+#     approach: 
+#               if higher jump in middle between current and last lower value
+#               if lower jump in middle between current and last higher value
 # =============================================================================
-
+    print(df)
     while 1:
-#        print(mem_pos)
-#        print(df.iloc[:1,:])
-#        print(mem_pos[-10:])
-#        print(df.iloc[mem_pos[-1],:])
+#        print(mem_pos) #debug
+#        print(df.iloc[:1,:]) #debug
+#        print(mem_pos[-10:]) #debug
+#        print(df.iloc[mem_pos[-1],:]) #debug
+#        print('lower', too_low)
+#        print('higher', too_high)
 
-        if df.iloc[:mem_pos[-1]+1,:].length.sum() >= total*0.5 and mem_pos[-1]-1 in mem_pos\
-        or df.iloc[:mem_pos[-1]+1,:].length.sum() >= total*0.5 and mem_pos[-1]+1 in mem_pos:
-#            print('found')
+        if df.iloc[:mem_pos[-1],:].length.sum() >= total*0.5 and df.iloc[:mem_pos[-1]-1,:].length.sum() < total*0.5 \
+        or df.iloc[:mem_pos[-1],:].length.sum() >= total*0.5 and len(df) == 1:
+#            print('found') #debug
             #found the N50!
-            if len(mem_pos) > 2:
+            if len(df) > 1:
                 N50 = df.iloc[mem_pos[-1],1]
                 break
             #exception for single fasta
             else:
-                if df.iloc[:mem_pos[-2]+1,:].length.sum() >= total*0.5:
-                    N50 = df.iloc[0,1]
-                    mem_pos=mem_pos[:1]
-                    break
+                N50 = df.iloc[0,1]
+                mem_pos=[0]
+                break
 
-        #N50 already reached
-        elif df.iloc[:mem_pos[-1]+1,:].length.sum() > total*0.5:
-#            print('higher')
-            #print(df.iloc[:mem_pos[-1]+1,:].length.sum(), total*.5)
-            mem_pos.append( mem_pos[-1] - (abs(mem_pos[-1]-mem_pos[-2])//2))
-            
+        #N50 already passed
+        elif df.iloc[:mem_pos[-1],:].length.sum() > total*0.5:
+#            print('higher') #debug
+            too_high.append(mem_pos[-1])
+            if mem_pos[-1] != mem_pos[-2]:
+                mem_pos.append( mem_pos[-1] - (abs(mem_pos[-1]-too_low[-1])//2))
 
         #N50 not reached yet
-        elif df.iloc[:mem_pos[-1]+1,:].length.sum() < total*0.5:
-#            print('lower')
+        elif df.iloc[:mem_pos[-1],:].length.sum() < total*0.5:
+#            print('lower') #debug
+            too_low.append(mem_pos[-1])
             if mem_pos[-1] != mem_pos[-2]:
-                mem_pos.append( mem_pos[-1] + (abs(mem_pos[-1]-mem_pos[-2])//2))
-            #stagnating on lower values
-            elif df.iloc[:mem_pos[-1]+2,:].length.sum() >= total*0.5:
-#                print('exeption2')
-                N50 = df.iloc[mem_pos[-1]+2,1]
-                break
-            #stagnating on lower values
-            elif df.iloc[:mem_pos[-1]+3,:].length.sum() >= total*0.5:
-#                print('exeption3')
-                N50 = df.iloc[mem_pos[-1]+3,1]
-                break
-            elif df.iloc[:mem_pos[-1]+4,:].length.sum() >= total*0.5:
-#                print('exeption4')
-                N50 = df.iloc[mem_pos[-1]+4,1]
-                break
-            else:
-                print('ERROR: no exception-handling for this type of data!!')
-                break
+                mem_pos.append( mem_pos[-1] + (abs(mem_pos[-1]-too_high[-1])//2))
 
-        #exception: exact N50 nr gets hit from a not neighbouring position
-        elif df.iloc[:mem_pos[-1]+1,:].length.sum() == total*0.5 and df.iloc[:mem_pos[-1],:].length.sum() < total*0.5:
-#            print('exeption1')
-            #found the N50!)
-            N50 = df.iloc[mem_pos[-1],1]
-            #exit the while loop
-            break
         else:
             print('ERROR: no exception-handling for this type of data!!')
             break
@@ -179,14 +155,12 @@ def main(argv):
                ['median:', np.round(median)],
                ['total_bp:', total],
                ['N50:', N50]]
+
     results_pd = pd.DataFrame(results, dtype=int)
-    
     results_pd = results_pd.set_index([0])
     results_pd.columns = results_pd.iloc[0]
     results_pd = results_pd.reindex(results_pd.index.drop('total_time:'))
     del results_pd.index.name
-
-
 
     for i in range(len(mem_pos)):
         mem_pos[i] += 1
@@ -200,13 +174,8 @@ def main(argv):
     print()
     print(results_pd)
     print()
-
     
 
-
-
-        
-        
     sys.exit()
 
 if __name__ == "__main__":

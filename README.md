@@ -1,5 +1,5 @@
 # N50_calculator
-simple script to analyse your assembly
+simple script to analyse your assembly, very fast with memorizing
 
 ## MANUAL  
   
