@@ -15,18 +15,6 @@ class data:
         self.df[tipe][db][genome] = df
     def add_setting(self, name, settings):
         self.settings[name] = settings
-    def check(self):
-        print()
-        print('SETTINGS:')
-        for i in self.settings:
-            print(i+', ', end='')
-        print()
-        print()
-        print('DATAFRAMES:')
-        for i in self.df:
-            print(i+', ', end='')
-        print()
-        print()
 
 #init class data
 data = data()
