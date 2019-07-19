@@ -16,6 +16,7 @@ class data:
     def add_setting(self, name, settings):
         self.settings[name] = settings
 
+
 #init class data
 data = data()
 
@@ -31,9 +32,7 @@ form='N50.py\n\t--minc *minimum contig length, opt*\n\t <flat>'
 data.add_setting('time1', time.time())
 
 def main(argv):
-
     minc = 0
-    
     try:
         opts, args = getopt.getopt(argv,"h",["minc="])
     except getopt.GetoptError:
@@ -116,21 +115,20 @@ def main(argv):
         #break down ratio
         ratio = ratio/100
         #memorizing contig positions
-        #start at 0 for single fasta
+        #start at in middle position, add a 0 for single fastas
         mem_pos = [0, (len(df)-1)//2+1]
         #memorizing hits that wer too high & hits that were too low
         too_high = [len(df)-1]
         too_low = [0]
     
     # =============================================================================
-    #     analyze the position and the lower position, are we at the N50?
+    #     analyze the actual position and the next lower position, are we at the N50?
     #     approach: 
     #               if higher jump in middle between current and last lower value
     #               if lower jump in middle between current and last higher value
     # =============================================================================
     
         while 1:
-
             # N50 at exact position
             if df.iloc[:mem_pos[-1],:].length.sum() >= data.settings['total']*ratio and df.iloc[:mem_pos[-1]-1,:].length.sum() < data.settings['total']*ratio \
             or df.iloc[:mem_pos[-1],:].length.sum() >= data.settings['total']*ratio and len(df) == 1:
@@ -174,7 +172,6 @@ def main(argv):
 
     data.add_setting('time3', time.time())
 
-    #create output table
     results = [['contigs:', data.settings['contigs']],
                ['mean:', np.round(data.settings['mean'])],
                ['median:', np.round(data.settings['median'])],

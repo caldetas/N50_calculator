@@ -13,20 +13,24 @@ simple script to analyse your assembly, very fast with memorizing
     
 
 
-    reading_time: 17.0
+    
+    
+    reading_time: 	 0.3
+    total_time:   	 0.3
     
     
     
     results:
     
-    total_time:         17
-    contigs:        196954
-    mean:             1557
-    median:            765
-    total_bp:    306560817
-    N10:               612
-    N50:              2225
-    N90:             63921
+    contigs:       157
+    mean:        26251
+    median:      10110
+    total_bp:  4121479
+    N10:         13190
+    N50:         80841
+    N90:        290030
+    G/C:         69.8%
+    
 
 
 
