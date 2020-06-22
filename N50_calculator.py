@@ -15,7 +15,18 @@ class data:
         self.df[tipe][db][genome] = df
     def add_setting(self, name, settings):
         self.settings[name] = settings
-
+    def check(self):
+        print()
+        print('SETTINGS:')
+        for i in self.settings:
+            print(i+', ', end='')
+        print()
+        print()
+        print('DATAFRAMES:')
+        for i in self.df:
+            print(i+', ', end='')
+        print()
+        print()
 
 #init class data
 data = data()
@@ -32,7 +43,9 @@ form='N50.py\n\t--minc *minimum contig length, opt*\n\t <flat>'
 data.add_setting('time1', time.time())
 
 def main(argv):
+
     minc = 0
+    
     try:
         opts, args = getopt.getopt(argv,"h",["minc="])
     except getopt.GetoptError:
@@ -79,7 +92,7 @@ def main(argv):
             l1[-1].append(len(temp))
             l1.append([line])
             if len(temp) >= minc:
-                GC_count += temp.count('G') + temp.count('C')
+                GC_count += temp.count('G') + temp.count('C')+temp.count('g') + temp.count('c')
             temp=''
         else:
             temp += line
@@ -129,37 +142,46 @@ def main(argv):
     # =============================================================================
     
         while 1:
-            # N50 at exact position
-            if df.iloc[:mem_pos[-1],:].length.sum() >= data.settings['total']*ratio and df.iloc[:mem_pos[-1]-1,:].length.sum() < data.settings['total']*ratio \
-            or df.iloc[:mem_pos[-1],:].length.sum() >= data.settings['total']*ratio and len(df) == 1:
+
+
+            # find N50 at exact position
+            #current position > N50 and position before < N50:
+            if df.iloc[:mem_pos[-1]+1,:].length.sum() >= data.settings['total']*ratio and df.iloc[:mem_pos[-1],:].length.sum() < data.settings['total']*ratio \
+            or df.iloc[:mem_pos[-1]+1,:].length.sum() >= data.settings['total']*ratio and mem_pos[-1] == 0:
+           #single fasta:
+
                 #found the N50!
-                if len(df) > 1:
-                    N50 = df.iloc[mem_pos[-1],1]
-                    break
-                #exception for single fasta
-                else:
-                    N50 = df.iloc[0,1]
-                    mem_pos=[0]
-                    break
+                N50 = df.iloc[mem_pos[-1],1]
+                break
+
     
             #N50 already passed
-            elif df.iloc[:mem_pos[-1],:].length.sum() > data.settings['total']*ratio:
+            elif df.iloc[:mem_pos[-1]+1,:].length.sum() > data.settings['total']*ratio:
+                # print('higher') #debug
                 too_high.append(mem_pos[-1])
                 if mem_pos[-1] != mem_pos[-2]:
                     mem_pos.append( mem_pos[-1] - (abs(mem_pos[-1]-too_low[-1])//2))
-    
-            #N50 not reached yet
-            elif df.iloc[:mem_pos[-1],:].length.sum() < data.settings['total']*ratio:
+                #stagnating one higher than N50
+                else:
+                    # print('stagnating')
+                    mem_pos.append( mem_pos[-1] -1)    
+ 
+            
+ #N50 not reached yet
+            elif df.iloc[:mem_pos[-1]+1,:].length.sum() < data.settings['total']*ratio:
+                # print('lower') #debug
                 too_low.append(mem_pos[-1])
                 if mem_pos[-1] != mem_pos[-2]:
                     mem_pos.append( mem_pos[-1] + (abs(mem_pos[-1]-too_high[-1])//2))
                 #N50 is on last contig
-                elif mem_pos[-1]+2 == len(df):
+                elif mem_pos[-1]+1 == len(df):
                         N50 = df.iloc[-1,1]
                         break
                 #stagnating one lower than N50
                 else:
+                    # print('stagnating')
                     mem_pos.append( mem_pos[-1] + 1)
+ 
             else:
                 print('ERROR: no exception-handling for this type of data!!')
                 break
@@ -173,7 +195,7 @@ def main(argv):
     data.add_setting('time3', time.time())
 
     results = [['contigs:', data.settings['contigs']],
-               ['mean:', np.round(data.settings['mean'])],
+               ['mean:', str('~{:.2f}'.format(data.settings['mean']))],
                ['median:', np.round(data.settings['median'])],
                ['total_bp:', data.settings['total']],
                ['N10:', N(10)],
@@ -189,7 +211,7 @@ def main(argv):
         df.columns = df.iloc[0,:]
         df = df.reindex(df.index.drop(temp))
         del df[temp]
-        del df.index.name
+        df.index.name = ''
         print(df)
 
     #print output
@@ -201,6 +223,7 @@ def main(argv):
     print()
     print('results:')
     print()
+    # print(pd.DataFrame(results).to_csv(sep='\t', index=False, header=None))
     pd_print(pd.DataFrame(results))
     print()
 
